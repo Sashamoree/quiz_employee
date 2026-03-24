@@ -94,5 +94,5 @@ RANKS = [
 nano app.py
 passed = correct_count >= 10  # 10 из 15
 ```
-```Лицензия и Автор
+### Лицензия и Автор
 MIT License - Sashamoree
