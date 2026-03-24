@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="stat-header">
+        <h1>Статистика тестирования</h1>
+        <div class="stat-summary">
+            <div class="summary-item">
+                <span class="summary-label">Всего тестов:</span>
+                <span class="summary-value">{{ stats.total }}</span>
+            </div>
+            <div class="summary-item success">
+                <span class="summary-label">Сдано:</span>
+                <span class="summary-value">{{ stats.passed }}</span>
+            </div>
+            <div class="summary-item danger">
+                <span class="summary-label">Не сдано:</span>
+                <span class="summary-value">{{ stats.failed }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Успешность:</span>
+                <span class="summary-value">{{ stats.success_rate }}%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Форма фильтрации -->
+    <div class="filter-panel">
+        <form method="GET" action="/statistics" id="filter-form">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <input type="text" name="full_name" value="{{ filters.full_name }}" placeholder="Поиск по ФИО">
+                </div>
+                <div class="filter-group">
+                    <input type="text" name="department" value="{{ filters.department }}" placeholder="Поиск по отделу">
+                </div>
+                <div class="filter-group">
+                    <input type="date" name="date_from" value="{{ filters.date_from }}" placeholder="Дата с">
+                </div>
+                <div class="filter-group">
+                    <input type="date" name="date_to" value="{{ filters.date_to }}" placeholder="Дата по">
+                </div>
+                <div class="filter-buttons">
+                    <button type="submit" class="btn">Поиск</button>
+                    <a href="/statistics" class="btn btn-clear">Сбросить</a>
+                    <a href="/export_excel?full_name={{ filters.full_name }}&department={{ filters.department }}&date_from={{ filters.date_from }}&date_to={{ filters.date_to }}"
+                       class="btn btn-success">Выгрузить</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Таблица результатов -->
+    {% if results %}
+    <div class="table-wrapper">
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th>№</th>
+                    <th>ФИО</th>
+                    <th>Отдел</th>
+                    <th>Дата тестирования</th>
+                    <th>Результат</th>
+                    <th>Статистика</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in results %}
+                <tr class="stats-row">
+                    <td class="text-center">{{ loop.index }}</td>
+                    <td class="full-name-cell">{{ r.full_name }}</td>
+                    <td class="department-cell">{{ r.department }}</td>
+                    <td class="date-cell">{{ r.formatted_date }}</td>
+                    <td class="result-cell">
+                        <span class="result-badge {% if r.passed %}result-success{% else %}result-failed{% endif %}">
+                            {% if r.passed %}Зачет{% else %}Незачет{% endif %}
+                        </span>
+                    </td>
+                    <td class="stats-cell">
+                        <span class="score-text">{{ r.score }} / {{ r.total_questions }}</span>
+                        <span class="percent-badge">{{ r.percentage }}%</span>
+                    </td>
+                    <td class="actions-cell">
+                        <a href="/view_errors/{{ r.id }}" class="btn-small">Ошибки</a>
+                        <a href="/print_report/{{ r.id }}" class="btn-small" target="_blank">Печать</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <p>Нет результатов тестирования</p>
+        {% if filters.full_name or filters.department or filters.date_from or filters.date_to %}
+        <p>По заданным фильтрам ничего не найдено</p>
+        <a href="/statistics" class="btn">Показать все результаты</a>
+        {% else %}
+        <p>Пройдите тест, чтобы увидеть статистику</p>
+        <a href="/" class="btn">Пройти тест</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h1>Тестирование</h1>
+    <p><strong>ФИО:</strong> {{ full_name }}</p>
+    <p><strong>Должность:</strong> {{ rank }}</p>
+    <p><strong>Отдел:</strong> {{ department }}</p>
+    <p><strong>Экзаменатор:</strong> {{ examiner_name }} ({{ examiner_rank }})</p>
+    <hr>
+
+    {% if questions %}
+    <div id="quiz-container">
+        <form id="quiz-form" action="/submit_test" method="POST">
+            <input type="hidden" name="full_name" value="{{ full_name }}">
+            <input type="hidden" name="rank" value="{{ rank }}">
+            <input type="hidden" name="department" value="{{ department }}">
+            <input type="hidden" name="examiner_name" value="{{ examiner_name }}">
+            <input type="hidden" name="examiner_rank" value="{{ examiner_rank }}">
+            <input type="hidden" name="total_questions" value="{{ questions|length }}">
+
+            <div id="question-area">
+                {% for question in questions %}
+                <div class="question-page" data-qid="{{ question.id }}" style="display: none;">
+                    <div class="progress-info">
+                        <span>Вопрос {{ loop.index }} из {{ questions|length }}</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: {{ (loop.index / questions|length * 100)|round }}%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="question-text">
+                        <h3>{{ question.text }}</h3>
+                    </div>
+
+                    <div class="options">
+                        <div class="option">
+                            <input type="radio" name="answer_{{ question.id }}" value="1" id="q{{ question.id }}_1">
+                            <label for="q{{ question.id }}_1">{{ question.option1 }}</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="answer_{{ question.id }}" value="2" id="q{{ question.id }}_2">
+                            <label for="q{{ question.id }}_2">{{ question.option2 }}</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" name="answer_{{ question.id }}" value="3" id="q{{ question.id }}_3">
+                            <label for="q{{ question.id }}_3">{{ question.option3 }}</label>
+                        </div>
+                    </div>
+
+                    <div class="navigation-buttons">
+                        {% if not loop.first %}
+                        <button type="button" class="btn prev-btn">← Назад</button>
+                        {% endif %}
+
+                        {% if loop.last %}
+                        <button type="button" class="btn btn-success submit-btn">Завершить тест ✓</button>
+                        {% else %}
+                        <button type="button" class="btn next-btn">Далее →</button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </form>
+    </div>
+    {% else %}
+    <p class="incorrect">В базе нет вопросов. Пожалуйста, добавьте вопросы в разделе "Вопросы".</p>
+    <a href="/questions" class="btn">Добавить вопросы</a>
+    {% endif %}
+</div>
+
+<style>
+    .progress-info {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 8px;
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #5a6e8a 0%, #7c8ea0 100%);
+    transition: width 0.3s ease;
+    border-radius: 8px;
+}
+
+.question-text {
+    margin: 30px 0;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(4px);
+    border-radius: 20px;
+    border: 1px solid rgba(203, 213, 225, 0.5);
+}
+
+.question-text h3 {
+    margin: 0;
+    font-size: 1.3em;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.options {
+    margin: 30px 0;
+}
+
+.option {
+    margin: 12px 0;
+    padding: 14px 18px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    background: white;
+}
+
+.option:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    transform: translateX(4px);
+}
+
+.option.selected {
+    background: #f1f5f9;
+    border-color: #5a6e8a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.option input {
+    margin-right: 14px;
+    transform: scale(1.2);
+    cursor: pointer;
+    accent-color: #5a6e8a;
+}
+
+.option label {
+    cursor: pointer;
+    font-size: 1.05em;
+    color: #334155;
+    font-weight: 500;
+}
+
+.navigation-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    gap: 15px;
+}
+
+.navigation-buttons .btn {
+    flex: 1;
+    text-align: center;
+}
+
+.question-page {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Дополнительные стили для результата теста */
+.test-result {
+    text-align: center;
+    padding: 20px;
+}
+
+.result-score {
+    font-size: 3rem;
+    font-weight: 700;
+    margin: 20px 0;
+    background: linear-gradient(135deg, #2c3e50 0%, #4a5568 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.result-details {
+    margin: 30px 0;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(4px);
+    border-radius: 20px;
+    border: 1px solid rgba(203, 213, 225, 0.5);
+}
+
+.result-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+/* Индикатор текущего вопроса */
+.question-counter {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #64748b;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const pages = document.querySelectorAll('.question-page');
+        let currentPage = 0;
+        const totalPages = pages.length;
+
+        if (pages.length > 0) {
+            pages[0].style.display = 'block';
+        }
+
+        function showPage(index) {
+            if (index < 0 || index >= totalPages) return;
+            pages.forEach(page => page.style.display = 'none');
+            pages[index].style.display = 'block';
+            currentPage = index;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        document.querySelectorAll('.option').forEach(option => {
+            option.addEventListener('click', function(e) {
+                const radio = this.querySelector('input[type="radio"]');
+                if (radio) {
+                    radio.checked = true;
+                    const parent = this.closest('.options');
+                    parent.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                }
+            });
+            const radio = option.querySelector('input[type="radio"]');
+            if (radio && radio.checked) {
+                option.classList.add('selected');
+            }
+        });
+
+        document.querySelectorAll('.next-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const currentPageDiv = pages[currentPage];
+                const radios = currentPageDiv.querySelectorAll('input[type="radio"]');
+                let isChecked = false;
+                radios.forEach(radio => { if (radio.checked) isChecked = true; });
+
+                if (!isChecked) {
+                    alert('Пожалуйста, выберите вариант ответа');
+                    return;
+                }
+                if (currentPage < totalPages - 1) {
+                    showPage(currentPage + 1);
+                }
+            });
+        });
+
+        document.querySelectorAll('.prev-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (currentPage > 0) showPage(currentPage - 1);
+            });
+        });
+
+        const submitBtn = document.querySelector('.submit-btn');
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function() {
+                const currentPageDiv = pages[currentPage];
+                const radios = currentPageDiv.querySelectorAll('input[type="radio"]');
+                let isChecked = false;
+                radios.forEach(radio => { if (radio.checked) isChecked = true; });
+
+                if (!isChecked) {
+                    alert('Пожалуйста, выберите вариант ответа на последний вопрос');
+                    return;
+                }
+                if (confirm('Вы уверены, что хотите завершить тест?')) {
+                    document.getElementById('quiz-form').submit();
+                }
+            });
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                const nextBtn = document.querySelector('.next-btn');
+                if (nextBtn) nextBtn.click();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                const prevBtn = document.querySelector('.prev-btn');
+                if (prevBtn) prevBtn.click();
+            }
+        });
+    });
+</script>
+{% endblock %}

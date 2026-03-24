@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h1>Управление вопросами</h1>
+    <p class="subtitle">Всего вопросов в базе: <strong>{{ total }}</strong></p>
+
+    <!-- Кнопка добавления вопроса -->
+    <div class="actions-bar">
+        <button class="btn btn-add" onclick="toggleAddForm()">Добавить вопрос</button>
+    </div>
+
+    <!-- Форма добавления вопроса -->
+    <div id="add-question-form" style="display: none;" class="add-form">
+        <h2>Новый вопрос</h2>
+        <form method="POST">
+            <textarea name="text" placeholder="Текст вопроса" rows="3" required></textarea>
+            <div class="options-group">
+                <div class="option-input">
+                    <span class="option-letter">А.</span>
+                    <input type="text" name="option1" placeholder="Вариант ответа 1" required>
+                </div>
+                <div class="option-input">
+                    <span class="option-letter">Б.</span>
+                    <input type="text" name="option2" placeholder="Вариант ответа 2" required>
+                </div>
+                <div class="option-input">
+                    <span class="option-letter">В.</span>
+                    <input type="text" name="option3" placeholder="Вариант ответа 3" required>
+                </div>
+            </div>
+            <div class="correct-select">
+                <label>Правильный ответ:</label>
+                <select name="correct_option" required>
+                    <option value="1">Вариант 1 (А)</option>
+                    <option value="2">Вариант 2 (Б)</option>
+                    <option value="3">Вариант 3 (В)</option>
+                </select>
+            </div>
+            <div class="form-buttons">
+                <button type="submit" class="btn btn-success">Сохранить</button>
+                <button type="button" class="btn" onclick="toggleAddForm()">Отмена</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Поиск -->
+    <div class="search-bar">
+        <form method="GET" action="/questions">
+            <input type="text" name="search" placeholder="Поиск по вопросам..." value="{{ search }}" class="search-input">
+            <button type="submit" class="btn">Найти</button>
+            {% if search %}
+            <a href="/questions" class="btn btn-clear">Сбросить</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Список вопросов -->
+    {% if questions %}
+    <div class="questions-list">
+        {% for q in questions %}
+        <div class="question-card" id="question-{{ q.id }}">
+    <div class="question-header">
+        <span class="question-number">Вопрос {{ loop.index + (pagination.page - 1) * per_page }}</span>
+        <div class="question-actions">
+            <button class="btn-icon btn-edit" onclick="openEditModal({{ q.id }})" title="Редактировать">✏️</button>
+            <button class="btn-icon btn-delete" onclick="deleteQuestion({{ q.id }}, '{{ q.text[:50]|escape }}')" title="Удалить">🗑️</button>
+        </div>
+    </div>
+    <div class="question-text-full">
+        <strong>{{ q.text }}</strong>
+    </div>
+    <div class="question-options">
+        <div class="option-item {% if q.correct_option == 1 %}correct-option{% endif %}">
+            <span class="opt-letter">А.</span>
+            <span class="option-text">{{ q.option1 }}</span>
+            {% if q.correct_option == 1 %}<span class="correct-badge">✓ Правильный</span>{% endif %}
+        </div>
+        <div class="option-item {% if q.correct_option == 2 %}correct-option{% endif %}">
+            <span class="opt-letter">Б.</span>
+            <span class="option-text">{{ q.option2 }}</span>
+            {% if q.correct_option == 2 %}<span class="correct-badge">✓ Правильный</span>{% endif %}
+        </div>
+        <div class="option-item {% if q.correct_option == 3 %}correct-option{% endif %}">
+            <span class="opt-letter">В.</span>
+            <span class="option-text">{{ q.option3 }}</span>
+            {% if q.correct_option == 3 %}<span class="correct-badge">✓ Правильный</span>{% endif %}
+        </div>
+    </div>
+</div>
+        {% endfor %}
+    </div>
+
+    <!-- Пагинация -->
+    {% if pagination.pages > 1 %}
+    <div class="pagination">
+        {% if pagination.has_prev %}
+        <a href="{{ url_for('manage_questions', page=pagination.prev_num, search=search) }}" class="btn-page">← Предыдущая</a>
+        {% endif %}
+
+        <span class="page-info">Страница {{ pagination.page }} из {{ pagination.pages }}</span>
+
+        {% if pagination.has_next %}
+        <a href="{{ url_for('manage_questions', page=pagination.next_num, search=search) }}" class="btn-page">Следующая →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <p>Вопросов не найдено</p>
+        {% if search %}
+        <p>По запросу "{{ search }}" ничего не найдено</p>
+        <a href="/questions" class="btn">Показать все вопросы</a>
+        {% else %}
+        <button class="btn btn-add" onclick="toggleAddForm()">➕ Добавить первый вопрос</button>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Модальное окно редактирования -->
+<div id="edit-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Редактирование вопроса</h2>
+            <span class="modal-close" onclick="closeEditModal()">&times;</span>
+        </div>
+        <form id="edit-form" action="/edit_question" method="POST">
+            <input type="hidden" name="question_id" id="edit_question_id">
+            <textarea name="text" id="edit_text" placeholder="Текст вопроса" rows="3" required></textarea>
+            <div class="options-group">
+                <div class="option-input">
+                    <span class="option-letter">А.</span>
+                    <input type="text" name="option1" id="edit_option1" placeholder="Вариант ответа 1" required>
+                </div>
+                <div class="option-input">
+                    <span class="option-letter">Б.</span>
+                    <input type="text" name="option2" id="edit_option2" placeholder="Вариант ответа 2" required>
+                </div>
+                <div class="option-input">
+                    <span class="option-letter">В.</span>
+                    <input type="text" name="option3" id="edit_option3" placeholder="Вариант ответа 3" required>
+                </div>
+            </div>
+            <div class="correct-select">
+                <label>Правильный ответ:</label>
+                <select name="correct_option" id="edit_correct_option" required>
+                    <option value="1">Вариант 1 (А)</option>
+                    <option value="2">Вариант 2 (Б)</option>
+                    <option value="3">Вариант 3 (В)</option>
+                </select>
+            </div>
+            <div class="form-buttons">
+                <button type="submit" class="btn btn-success">Сохранить изменения</button>
+                <button type="button" class="btn" onclick="closeEditModal()">Отмена</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script>
+    function toggleAddForm() {
+        const form = document.getElementById('add-question-form');
+        if (form.style.display === 'none') {
+            form.style.display = 'block';
+            form.scrollIntoView({ behavior: 'smooth' });
+        } else {
+            form.style.display = 'none';
+        }
+    }
+
+    function openEditModal(id) {
+    console.log('Запрос вопроса ID:', id);
+
+    fetch(`/api/question/${id}`)
+        .then(response => {
+            console.log('Статус ответа:', response.status);
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`HTTP ${response.status}: ${text}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Полученные данные:', data);
+            if (data.success) {
+                document.getElementById('edit_question_id').value = data.question.id;
+                document.getElementById('edit_text').value = data.question.text;
+                document.getElementById('edit_option1').value = data.question.option1;
+                document.getElementById('edit_option2').value = data.question.option2;
+                document.getElementById('edit_option3').value = data.question.option3;
+                document.getElementById('edit_correct_option').value = data.question.correct_option;
+                document.getElementById('edit-modal').style.display = 'block';
+            } else {
+                alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка fetch:', error);
+            alert('Не удалось загрузить вопрос. Ошибка: ' + error.message);
+        });
+}
+
+    function closeEditModal() {
+        document.getElementById('edit-modal').style.display = 'none';
+    }
+
+    function deleteQuestion(id, text) {
+        if (confirm(`Удалить вопрос "${text}"?`)) {
+            window.location.href = `/delete_question/${id}`;
+        }
+    }
+
+    // Закрытие модального окна по клику вне его
+    window.onclick = function(event) {
+        const modal = document.getElementById('edit-modal');
+        if (event.target === modal) {
+            closeEditModal();
+        }
+    }
+</script>
+{% endblock %}

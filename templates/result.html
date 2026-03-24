@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h1>Результаты тестирования</h1>
+    <p><strong>ФИО сотрудника:</strong> {{ full_name }}</p>
+    {% if rank %}
+    <p><strong>Должность:</strong> {{ rank }}</p>
+    {% endif %}
+    <p><strong>Отдел:</strong> {{ department }}</p>
+    <p><strong>Экзаменатор:</strong> {{ examiner_name }} {% if examiner_rank %}({{ examiner_rank }}){% endif %}</p>
+    <p><strong>Правильных ответов:</strong> {{ score }} из {{ total }}</p>
+
+    <h2 class="{% if passed %}correct{% else %}incorrect{% endif %}">
+        Результат: {% if passed %}Зачет{% else %}Незачет{% endif %}
+    </h2>
+
+    <h3>Детали ответов:</h3>
+    {% for answer in answers %}
+    <div class="question">
+        <p><strong>{{ loop.index }}. {{ answer.text }}</strong></p>
+        <p>Ваш ответ: {{ answer.options[answer.user_answer-1] }}</p>
+        <p>Правильный ответ: {{ answer.options[answer.correct_answer-1] }}</p>
+        <p class="{% if answer.is_correct %}correct{% else %}incorrect{% endif %}">
+            {% if answer.is_correct %}✓ Правильно{% else %}✗ Неправильно{% endif %}
+        </p>
+    </div>
+    {% endfor %}
+
+    <a href="/print_report/{{ test_id }}" class="btn" target="_blank">Распечатать отчет</a>
+    <a href="/" class="btn">На главную</a>
+</div>
+{% endblock %}

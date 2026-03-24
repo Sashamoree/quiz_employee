@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h1>Тестирование сотрудника на требования Информационной Безопасности</h1>
+    <p>Введите данные перед началом тестирования</p>
+
+    <form action="/start_test" method="POST">
+        <div>
+            <label>ФИО сотрудника:</label>
+            <input type="text" name="full_name" required placeholder="Иванов Иван Иванович">
+        </div>
+        <div>
+            <label>Должность:</label>
+            <select name="rank" required>
+                <option value="">Выберите Должность</option>
+                {% for rank in ranks %}
+                <option value="{{ rank }}">{{ rank }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>Подразделение:</label>
+            <input type="text" name="department" required placeholder="Отдел ИБ">
+        </div>
+        <div>
+            <label>Экзаменатор:</label>
+            <select name="examiner" required>
+                <option value="">Выберите экзаменатора</option>
+                {% for examiner in examiners %}
+                <option value="{{ examiner.name }}|{{ examiner.rank }}">{{ examiner.name }} ({{ examiner.rank }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn">Начать тест</button>
+    </form>
+</div>
+
+<style>
+    select {
+        width: 100%;
+        padding: 12px 16px;
+        margin: 10px 0;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 16px;
+        background: white;
+        cursor: pointer;
+    }
+
+    select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    label {
+        font-weight: 600;
+        color: #2d3748;
+        margin-top: 10px;
+        display: block;
+    }
+</style>
+{% endblock %}

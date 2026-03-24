@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h1>Ошибки тестирования</h1>
+    <p><strong>ФИО:</strong> {{ test.full_name }}</p>
+    <p><strong>Отдел:</strong> {{ test.department }}</p>
+    <p><strong>Дата:</strong> {{ test.test_date.strftime('%H:%M %d.%m.%Y') }}</p>
+    <p><strong>Результат:</strong> {{ total_correct }}/{{ total_questions }} ({% if test.passed %}Зачет{% else %}Незачет{% endif %})</p>
+    
+    <h2>Список ошибок</h2>
+    {% if errors %}
+        {% for error in errors %}
+        <div class="question">
+            <p><strong>{{ loop.index }}. {{ error.text }}</strong></p>
+            <p>Ваш ответ: {{ error.options[error.user_answer-1] }}</p>
+            <p>Правильный ответ: {{ error.options[error.correct_answer-1] }}</p>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="correct">✓ Отлично! Нет ошибок!</p>
+    {% endif %}
+    
+    <a href="/statistics" class="btn">← Назад к статистике</a>
+    <a href="/print_report/{{ test.id }}" class="btn" target="_blank">Распечатать полный отчет</a>
+</div>
+{% endblock %}
